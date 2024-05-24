@@ -1,0 +1,39 @@
+// .nutui-react-demo {
+//   height: 100vh;
+//   display: flex;
+//   flex-direction: column;
+//   justify-content: center;
+//   align-items: center;
+// }
+
+.index {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24rpx;
+  margin-bottom: 30px;
+}
+
+.title {
+  display: block;
+  margin: 20px 0;
+  font-weight: 600;
+}
+
+.btn {
+  display: block;
+  width: 80%;
+  margin-right: 20px;
+  margin-bottom: 20px;
+}
+
+.list {
+  flex: 1;
+}
+.item {
+  height: 60px;
+  line-height: 60px;
+  text-indent: 20px;
+  font-size: 32px;
+  color: #333333;
+}

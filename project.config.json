@@ -1,0 +1,15 @@
+{
+  "miniprogramRoot": "./dist",
+  "projectname": "Bluetooth",
+  "description": "Bluetooth",
+  "appid": "wx422cb587fc54848a",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "enhance": false,
+    "compileHotReLoad": false,
+    "postcss": false,
+    "minified": false
+  },
+  "compileType": "miniprogram"
+}

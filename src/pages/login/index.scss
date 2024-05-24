@@ -1,0 +1,211 @@
+// page {
+//   background: linear-gradient(180deg, #FFEAEA 0%, rgba(255,255,255,0) 100%);
+//   height: 100vh;
+// }
+// .bgMask {
+//   position: fixed;
+//   left: 0;
+//   top: 0;
+//   width: 750px;
+//   height: 50vh;
+//   background: linear-gradient(180deg, #FFEAEA 0%, rgba(255,255,255,0) 100%);
+//   z-index: 6;
+// }
+.loginView {
+  // border-top: 1px solid #D8D8D8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 60px 0 60px;
+}
+.loginViewLogo {
+  width: 246px;
+  height: 246px;
+  margin-bottom: 92px;
+}
+.loginViewTitle {
+  text-align: center;
+  height: 44px;
+  font-size: 40px;
+  font-family: PingFang SC, PingFang SC;
+  font-weight: 500;
+  color: #3D3D3D;
+  line-height: 44px;
+  margin-bottom: 48px;
+}
+.loginViewMain {
+  width: 100%;
+}
+.loginViewForm {
+  width: 100%;
+  margin-bottom: 30px;
+}
+.loginViewFormControl {
+  margin-bottom: 40px;
+  position: relative;
+  height: 96px;
+  background: #F4F6F8;
+  border-radius: 100px;
+  padding-left: 40px;
+  padding-right: 100px;
+  box-sizing: border-box;
+}
+.loginViewFormControlPass{
+    padding-right: 148px;
+}
+.loginViewFormControl:last-child {
+  margin-bottom: 20px;
+}
+.loginViewFormControlIcon {
+  width: 48px;
+  height: 48px;
+  position: absolute;
+  left: 0;
+  top: 20px;
+  z-index: 89;
+}
+.loginViewFormControlValue {
+  height: 96px;
+  width: 100%;
+  font-size: 32px;
+  font-weight: 500;
+  font-family: PingFang SC, PingFang SC;
+  color: #20232B;
+  background: transparent;
+}
+.loginViewFormControlNoValue {
+  height: 96px;
+  width: 100%;
+  font-size: 32px;
+  font-family: PingFang SC, PingFang SC;
+  font-weight: 400;
+  color: #86909C;
+}
+.loginViewFormControlClear {
+  position: absolute;
+  right: 108px;
+  top: 0;
+  z-index: 199;
+  height: 96px;
+  width: 48px;
+  display: flex;
+  align-items: center;
+}
+.loginViewFormControlClearIcon {
+  width: 48px;
+  height: 48px;
+}
+.loginViewFormControlAction {
+  position: absolute;
+  right: 40px;
+  top: 0;
+  z-index: 99;
+  height: 96px;
+  width: 48px;
+  display: flex;
+  align-items: center;
+}
+.loginViewFormControlActionImg {
+  width: 48px;
+  height: 48px;
+}
+.loginViewFormControlCode {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 228px;
+  height: 88px;
+}
+.placeholder {
+  font-size: 32px;
+  font-family: PingFang SC, PingFang SC;
+  font-weight: 400 !important;
+  color: #86909C;
+}
+.loginViewFormForget {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 40px;
+  height: 40px;
+  font-size: 28px;
+  font-family: PingFang SC, PingFang SC;
+  font-weight: 400;
+  color: #666262;
+  padding-right: 36px;
+  box-sizing: border-box;
+}
+.loginViewFormForgetText {
+  font-size: 28px;
+  font-family: PingFang SC, PingFang SC;
+  font-weight: 400;
+  color: #4E5969;
+}
+.loginViewFormAction {
+  width: 100%;
+  height: 96px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-family: PingFang SC, PingFang SC;
+  font-weight: 500;
+  color: #FFFFFF;
+  background: rgba(237,109,15, 0.4);
+  margin-bottom: 40px;
+}
+.loginViewFormAction.active {
+  background: rgba(237,109,15, 1);
+}
+.loginViewFormTip {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 40px;
+  font-size: 28px;
+  font-family: PingFang SC, PingFang SC;
+  font-weight: 400;
+  color: #4E5969;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+.loginViewFormTipAction {
+  // color: #2787FF;
+  color: #FA432B;
+}
+.loginViewProtocol {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 44px;
+  font-size: 30px;
+  font-family: PingFang SC, PingFang SC;
+  font-weight: 400;
+  color: #333333;
+  position: fixed;
+  left: 0;
+  width: 100%;
+  bottom: calc(32px + constant(safe-area-inset-bottom));
+  bottom: calc(32px + env(safe-area-inset-bottom));
+}
+.loginViewProtocolIcon {
+  width: 40px;
+  height: 40px;
+  margin-right: 16px;
+}
+.loginViewProtocolTip {
+  margin-left: 10px;
+  // color: #2787FF;
+  color: #FA432B;
+}
+.w36 {
+  width: 36px;
+}
+.w48 {
+  width: 48px;
+}
+
