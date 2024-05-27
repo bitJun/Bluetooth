@@ -11,11 +11,44 @@ import "./index.scss";
 
 const Detail = () => {
   // const device = useSelector((state) => state.device);
-  const [focusInfo, setFocusInfo] = useState({});
-  const [companyInfo, setCompanyInfo] = useState({});
+  const [focusInfo, setFocusInfo] = useState({
+    '1B': false,
+    '10': false,
+    '11': false,
+    '12': false,
+    '13': false,
+    '23': false,
+    '14': false,
+    '25': false,
+    '24': false,
+    '1A': false,
+    '17': false,
+    '19': false,
+    '15': false,
+    '1C': false,
+    '22': false
+  });
+  const [companyInfo, setCompanyInfo] = useState({
+    '1B': '',
+    '10': '',
+    '11': '',
+    '12': '',
+    '13': '',
+    '23': '',
+    '14': '',
+    '25': '',
+    '24': '',
+    '1A': '',
+    '17': '',
+    '19': '',
+    '15': '',
+    '1C': '',
+    '22': ''
+  });
   const [services, setServices] = useState([]);
   const [readId, setReadId] = useState(null);
   const [writeId, setWriteId] = useState(null);
+  const [characteristicsId, setCharacteristicsId] = useState(null);
   const [characteristics, setCharacteristics] = useState([]);
 
   useEffect(() => {
@@ -24,11 +57,12 @@ const Detail = () => {
   }, []);
 
   useEffect(()=>{
-    console.log('services', services)
+    console.log('writeId', writeId)
+    console.log('characteristicsId', characteristicsId)
     // if (services && services.length > 0) {
     //   onLoadDeviceCharacteristics();
     // }
-  }, [services]);
+  }, [writeId, characteristicsId]);
 
   const InArray = (arr, key, val) => {
     for (let i = 0; i < arr.length; i++) {
@@ -48,7 +82,7 @@ const Detail = () => {
           deviceId: device.deviceId,
           success: function(res) {
             setServices(res.services)
-            console.log('services', res.services)
+            // console.log('services', res.services)
             res.services.forEach(item => {
               onLoadDeviceCharacteristics(item.uuid)
             })
@@ -65,17 +99,20 @@ const Detail = () => {
       deviceId: device.deviceId,
       serviceId: servicesId,
       success: function(res) {
-        console.log('characteristics', res)
+        // console.log('characteristics', res)
+        setCharacteristicsId(res.serviceId);
         res.characteristics.forEach(item=>{
-          if (item.properties.read) {
+          console.log('item', item)
+          if (item.properties.read && item.properties.write) {
             setReadId(item.uuid);
+            setWriteId(item.uuid);
             onReadBLECharacteristicValue(servicesId, item.uuid);
           }
-          if (item.properties.write) {
-            setWriteId(item.uuid);
-          }
+          // if (item.properties.write) {
+          //   setWriteId(item.uuid);
+          // }
           if (item.properties.notify || item.properties.indicate) {
-            console.log('item.properties', item.properties)
+            // console.log('item.properties', item.properties)
             Taro.notifyBLECharacteristicValueChange({
               deviceId: device.deviceId,
               serviceId: servicesId,
@@ -88,7 +125,7 @@ const Detail = () => {
                 // }
               },
               fail: function(err) {
-                console.log('readBLECharacteristicValueError:', err);
+                // console.log('readBLECharacteristicValueError:', err);
               }
             })
           }
@@ -96,8 +133,9 @@ const Detail = () => {
       }
     })
     wx.onBLECharacteristicValueChange((characteristic) => {
-      console.log('characteristic11',characteristic,ab2hex(characteristic.value))
-      console.log(`characteristic ${characteristic.characteristicId} has changed, now is ${ab2hex(characteristic.value)}`)
+      // console.log('value',characteristic.value)
+      // console.log('characteristic11',characteristic,ab2hex(characteristic.value))
+      // console.log(`characteristic ${characteristic.characteristicId} has changed, now is ${ab2hex(characteristic.value)}`)
       //开锁
       // if (characteristic.value.byteLength == 4) {
       //     // 以下这行我把开门密钥写死了 "0102030405060708" ，没有从全局变量读
@@ -126,20 +164,60 @@ const Detail = () => {
     })
   }
 
-  const onWriteBLECharacteristicValue = (strArray) => {
-    const array = new Uint8Array(strArray.length)
-    strArray.forEach((item, index) => array[index] = item)
+  const myStringtoHex = (str) => {
+    str = str.toLowerCase();
+    let newBuffer = new ArrayBuffer(str.length / 2);
+    let hexBuffer = new Uint8Array(newBuffer, 0);
+    let h = 0,
+      l = 0;
+    for (let i = 0; i < str.length / 2; i++) {
+      h = str.charCodeAt(2 * i);
+  
+      l = str.charCodeAt(2 * i + 1);
+      if (48 <= h && h <= 57) {
+        h = h - 48;
+      } else {
+        h = h - 97 + 10;
+      }
+      if (48 <= l && l <= 57) {
+        l = l - 48;
+      } else {
+        l = l - 97 + 10;
+      }
+      hexBuffer[i] = h * 16 + l;
+    }
+    return hexBuffer;
+  }
+
+  const stringToBinary = (str) => {
+    var array = new Uint8Array(str.length);
+    for (var i = 0, l = str.length; i < l; i++) {
+      array[i] = str.charCodeAt(i);
+    }
+    console.log(array);
+    return array.buffer;
+  }
+
+  const onWriteBLECharacteristicValue = () => {
+    let device = getGlobalData('deviceInfo');
+    var str = 'AA-02-10-02-0F-00-0D';
+    console.log('deviceId', device.deviceId);
+    console.log('writeId', writeId);
+    console.log('characteristicsId', characteristicsId);
     Taro.writeBLECharacteristicValue({
-      deviceId: this._deviceId,
-      serviceId: this._serviceId,
-      characteristicId: this._characteristicId,
-      value: array.buffer,
+      deviceId: device.deviceId,
+      serviceId: writeId,
+      characteristicId: characteristicsId,
+      value: stringToBinary(str),
+      success: function(res) {
+        console.log('res', res)
+      }
     })
   }
 
   const onReadBLECharacteristicValue = (servicesId, characteristicId) => {
-    console.log('servicesId', servicesId);
-    console.log('characteristicId', characteristicId);
+    // console.log('servicesId', servicesId);
+    // console.log('characteristicId', characteristicId);
     let device = getGlobalData('deviceInfo');
     Taro.readBLECharacteristicValue({
       deviceId: device.deviceId,
@@ -147,6 +225,7 @@ const Detail = () => {
       characteristicId: characteristicId,
       success: function(res) {
         console.log('characteristic', res) // 可以获取到特征值的数据
+        
       },
       fail: function (err) {
         console.log('err', err)
@@ -171,7 +250,13 @@ const Detail = () => {
     let data = { ...focusInfo };
     data[key] = false;
     setFocusInfo(data);
+    let value = companyInfo[key];
+    onWriteBLECharacteristicValue(value)
   };
+
+  const onSubmit = () => {
+    onWriteBLECharacteristicValue();
+  }
 
   return (
     <View>
@@ -182,29 +267,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['1B']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("1B", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输入欠压限制"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['1B'] && focusInfo['1B'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("1B");
                   }}
                   lazyLoad={true}
                 />
@@ -219,29 +298,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['10']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("10", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输入过流限制"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['10'] && focusInfo['10'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("10");
                   }}
                   lazyLoad={true}
                 />
@@ -256,29 +329,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['11']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("11", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输入过压限制"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['11'] && focusInfo['11'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("11");
                   }}
                   lazyLoad={true}
                 />
@@ -293,29 +360,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['12']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("12", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输出过流限制"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['12'] && focusInfo['12'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("12");
                   }}
                   lazyLoad={true}
                 />
@@ -330,29 +391,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['13']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("13", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输出过压限制"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['13'] && focusInfo['13'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("13");
                   }}
                   lazyLoad={true}
                 />
@@ -367,29 +422,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['24']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("23", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输出过流保护"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['24'] && focusInfo['24'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("23");
                   }}
                   lazyLoad={true}
                 />
@@ -404,29 +453,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['14']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("14", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输出功率最大值"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['14'] && focusInfo['14'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("14");
                   }}
                   lazyLoad={true}
                 />
@@ -441,29 +484,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['25']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("25", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输出过压恢复"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['25'] && focusInfo['25'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("25");
                   }}
                   lazyLoad={true}
                 />
@@ -478,29 +515,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['24']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("24", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输出欠压恢复"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['24'] && focusInfo['24'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("24");
                   }}
                   lazyLoad={true}
                 />
@@ -515,29 +546,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['1A']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("1A", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置高温报警限制"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['1A'] && focusInfo['1A'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("1A");
                   }}
                   lazyLoad={true}
                 />
@@ -552,29 +577,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['17']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("17", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置周期上报间隔"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['17'] && focusInfo['17'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("17");
                   }}
                   lazyLoad={true}
                 />
@@ -589,29 +608,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['19']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("19", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置开启时间段"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['19'] && focusInfo['19'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("19");
                   }}
                   lazyLoad={true}
                 />
@@ -626,29 +639,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['15']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("15", e);
               }}
               className='formViewControlInfoValue'
               placeholder="远程开关"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['15'] && focusInfo['15'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("15");
                   }}
                   lazyLoad={true}
                 />
@@ -663,29 +670,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['1C']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("1C", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输出电压"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['1C'] && focusInfo['1C'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("1C");
                   }}
                   lazyLoad={true}
                 />
@@ -700,29 +701,23 @@ const Detail = () => {
           </View>
           <View className='formViewControlInfo'>
             <Input
-              value={companyInfo.name}
+              value={companyInfo['22']}
               onInput={(e) => {
-                onChangeValue("name", e);
+                onChangeValue("22", e);
               }}
               className='formViewControlInfoValue'
               placeholder="请设置输出功率"
               placeholderClass='placeholder'
               maxlength={50}
-              onFocus={() => {
-                onFocus("name");
-              }}
-              onBlur={() => {
-                onBlur("name");
-              }}
             />
-            {companyInfo.name && focusInfo.name ? (
+            {companyInfo['22'] && focusInfo['22'] ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
                   className='formViewControlInfoActionIcon'
                   mode="widthFix"
                   onClick={() => {
-                    onClearValue("name");
+                    onClearValue("22");
                   }}
                   lazyLoad={true}
                 />
