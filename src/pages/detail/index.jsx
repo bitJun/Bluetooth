@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Image, Input } from "@tarojs/components";
-import Taro from "@tarojs/taro";
+import Taro, { useDidHide } from "@tarojs/taro";
 import clearIcon from '@images/clearIcon.png';
 // import { useSelector } from 'react-redux';
 import { set as setGlobalData, get as getGlobalData } from '@config/global';
 import {
-  ab2hex
+  ab2hex,
+  stringToHex
 } from '@utils/util';
 import "./index.scss";
 
@@ -53,16 +54,14 @@ const Detail = () => {
 
   useEffect(() => {
     onConnectDevice();
-    // initService();
   }, []);
 
-  useEffect(()=>{
-    console.log('writeId', writeId)
-    console.log('characteristicsId', characteristicsId)
-    // if (services && services.length > 0) {
-    //   onLoadDeviceCharacteristics();
-    // }
-  }, [writeId, characteristicsId]);
+  useDidHide(()=>{
+    let device = getGlobalData('deviceInfo');
+    Taro.closeBLEConnection({
+      deviceId: device.deviceId,
+    })
+  })
 
   const InArray = (arr, key, val) => {
     for (let i = 0; i < arr.length; i++) {
@@ -82,7 +81,6 @@ const Detail = () => {
           deviceId: device.deviceId,
           success: function(res) {
             setServices(res.services)
-            // console.log('services', res.services)
             res.services.forEach(item => {
               onLoadDeviceCharacteristics(item.uuid)
             })
@@ -99,20 +97,16 @@ const Detail = () => {
       deviceId: device.deviceId,
       serviceId: servicesId,
       success: function(res) {
-        // console.log('characteristics', res)
-        setCharacteristicsId(res.serviceId);
+        setCharacteristicsId(res.characteristics[0].uuid);
         res.characteristics.forEach(item=>{
-          console.log('item', item)
           if (item.properties.read && item.properties.write) {
-            setReadId(item.uuid);
-            setWriteId(item.uuid);
+            setReadId(servicesId);
             onReadBLECharacteristicValue(servicesId, item.uuid);
           }
-          // if (item.properties.write) {
-          //   setWriteId(item.uuid);
-          // }
+          if (item.properties.write && (item.properties.notify || item.properties.indicate)) {
+            setWriteId(servicesId);
+          }
           if (item.properties.notify || item.properties.indicate) {
-            // console.log('item.properties', item.properties)
             Taro.notifyBLECharacteristicValueChange({
               deviceId: device.deviceId,
               serviceId: servicesId,
@@ -120,9 +114,6 @@ const Detail = () => {
               state: true,
               success(res) {
                 console.log('notifyBLECharacteristicValueChange success', res , res.errMsg)
-                // if (item.properties.read) {
-                //   onReadBLECharacteristicValue(servicesId, item.uuid);
-                // }
               },
               fail: function(err) {
                 // console.log('readBLECharacteristicValueError:', err);
@@ -133,60 +124,8 @@ const Detail = () => {
       }
     })
     wx.onBLECharacteristicValueChange((characteristic) => {
-      // console.log('value',characteristic.value)
-      // console.log('characteristic11',characteristic,ab2hex(characteristic.value))
-      // console.log(`characteristic ${characteristic.characteristicId} has changed, now is ${ab2hex(characteristic.value)}`)
-      //开锁
-      // if (characteristic.value.byteLength == 4) {
-      //     // 以下这行我把开门密钥写死了 "0102030405060708" ，没有从全局变量读
-      //     var buff = OpenLock(characteristic.value, this.data.lockname, "0102030405060708" /*this.data.devices[0].auth.productKey*/)
-      //     onWriteBLECharacteristicValue(buff)
-      // }
-      // const idx = InArray(this.data.chs, 'uuid', characteristic.characteristicId)
-      // const data = {}
-      // if (idx === -1) {
-      //     data[`chs[${this.data.chs.length}]`] = {
-      //         uuid: characteristic.characteristicId,
-      //         value: ab2hex(characteristic.value)
-      //     }
-      // } else {
-      //     data[`chs[${idx}]`] = {
-      //         uuid: characteristic.characteristicId,
-      //         value: ab2hex(characteristic.value)
-      //     }
-      // }
-      // var chr=ab2hex(characteristic.value);
-      // if(chr.substring(chr.length - 2, chr.length)=="5a"){
-      //     // 断开蓝牙连接
-      //     this_page.CloseBLEConnection()
-      // }
-      // this.setData(data)
+      // 具体操作
     })
-  }
-
-  const myStringtoHex = (str) => {
-    str = str.toLowerCase();
-    let newBuffer = new ArrayBuffer(str.length / 2);
-    let hexBuffer = new Uint8Array(newBuffer, 0);
-    let h = 0,
-      l = 0;
-    for (let i = 0; i < str.length / 2; i++) {
-      h = str.charCodeAt(2 * i);
-  
-      l = str.charCodeAt(2 * i + 1);
-      if (48 <= h && h <= 57) {
-        h = h - 48;
-      } else {
-        h = h - 97 + 10;
-      }
-      if (48 <= l && l <= 57) {
-        l = l - 48;
-      } else {
-        l = l - 97 + 10;
-      }
-      hexBuffer[i] = h * 16 + l;
-    }
-    return hexBuffer;
   }
 
   const stringToBinary = (str) => {
@@ -194,21 +133,30 @@ const Detail = () => {
     for (var i = 0, l = str.length; i < l; i++) {
       array[i] = str.charCodeAt(i);
     }
-    console.log(array);
+    console.log('array.buffer', array.buffer);
     return array.buffer;
+  }
+  
+  const hex = (str) => {
+
   }
 
   const onWriteBLECharacteristicValue = () => {
     let device = getGlobalData('deviceInfo');
     var str = 'AA-02-10-02-0F-00-0D';
-    console.log('deviceId', device.deviceId);
-    console.log('writeId', writeId);
-    console.log('characteristicsId', characteristicsId);
+    
+    let arr = str.split('-');
+    let arrs = [];
+    arr.forEach((item, index)=>{
+      arrs[index] = stringToHex(item);
+    })
+    let val = arrs.join('-');
+    console.log('val', val)
     Taro.writeBLECharacteristicValue({
       deviceId: device.deviceId,
       serviceId: writeId,
       characteristicId: characteristicsId,
-      value: stringToBinary(str),
+      value: str,
       success: function(res) {
         console.log('res', res)
       }
@@ -216,8 +164,6 @@ const Detail = () => {
   }
 
   const onReadBLECharacteristicValue = (servicesId, characteristicId) => {
-    // console.log('servicesId', servicesId);
-    // console.log('characteristicId', characteristicId);
     let device = getGlobalData('deviceInfo');
     Taro.readBLECharacteristicValue({
       deviceId: device.deviceId,
@@ -225,10 +171,6 @@ const Detail = () => {
       characteristicId: characteristicId,
       success: function(res) {
         console.log('characteristic', res) // 可以获取到特征值的数据
-        
-      },
-      fail: function (err) {
-        console.log('err', err)
       }
     })
   }

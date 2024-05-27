@@ -475,6 +475,17 @@ export function ab2hex(buffer) {
   return hexArr.join(':');
 }
 
+export function stringToHex(str) {
+  let hex = '';
+  for (let i = 0; i < str.length; i++) {
+    let code = str.charCodeAt(i);
+    let hexCode = code.toString(16);
+    // 如果是单字符的16进制，前面补0
+    hex += hexCode.length === 1 ? '0' + hexCode : hexCode;
+  }
+  return hex;
+}
+
 /**
  * 判断传值是否为空、[]、{}
  * @param {*} param 
