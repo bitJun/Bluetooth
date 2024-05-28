@@ -6,7 +6,11 @@ import clearIcon from '@images/clearIcon.png';
 import { set as setGlobalData, get as getGlobalData } from '@config/global';
 import {
   ab2hex,
-  stringToHex
+  stringToHex,
+  string2buffer,
+  arrayBufferToHex,
+  hexToString,
+  arrayBufferToUtf8String
 } from '@utils/util';
 import "./index.scss";
 
@@ -123,42 +127,49 @@ const Detail = () => {
         })
       }
     })
-    wx.onBLECharacteristicValueChange((characteristic) => {
-      // 具体操作
+    wx.onBLECharacteristicValueChange((res) => {
+      console.log('res', res)
+      console.log('success', arrayBufferToUtf8String(res.value))
     })
   }
+  const ab2hex = (buffer) => {
+    var hexArr = Array.prototype.map.call(
+      new Uint8Array(buffer),
+      function (bit) {
+        return ('00' + bit.toString(16)).slice(-2)
+      }
+    )
+    return hexArr.join('');
+  }
 
-  const stringToBinary = (str) => {
-    var array = new Uint8Array(str.length);
-    for (var i = 0, l = str.length; i < l; i++) {
-      array[i] = str.charCodeAt(i);
+  const arrayBufferToString = (buffer) => {
+    console.log('buffer', typeof(array));
+    let array = new Uint8Array(buffer);
+    console.log('arr', typeof(array));
+    let str = '';
+    for (let i = 0; i < array.byteLength; i++) {
+      str += String.fromCharCode(array[i]);
     }
-    console.log('array.buffer', array.buffer);
-    return array.buffer;
+    console.log('str', str);
+    return str;
   }
-  
-  const hex = (str) => {
 
-  }
+  const stringToCmdBuffer = (inputstr) => {
+    return new Uint8Array(inputstr.match(/[\da-f]{2}/gi).map(function (h) {
+      return parseInt(h, 16);
+    })).buffer;
+  };
 
   const onWriteBLECharacteristicValue = () => {
     let device = getGlobalData('deviceInfo');
-    var str = 'AA-02-10-02-0F-00-0D';
-    
-    let arr = str.split('-');
-    let arrs = [];
-    arr.forEach((item, index)=>{
-      arrs[index] = stringToHex(item);
-    })
-    let val = arrs.join('-');
-    console.log('val', val)
+    var str = 'AA-02-13-02-0F-00-0D';
     Taro.writeBLECharacteristicValue({
       deviceId: device.deviceId,
       serviceId: writeId,
       characteristicId: characteristicsId,
-      value: str,
-      success: function(res) {
-        console.log('res', res)
+      value: stringToCmdBuffer(str),
+      complete: function(json) {
+        console.log('json', json)
       }
     })
   }

@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 /* eslint-disable no-undef */
 import Taro from "@tarojs/taro";
+import TextDecoder from 'miniprogram-text-decoder'
 
 /**
  * 从缓存中获取用户信息,注意key和value
@@ -475,17 +476,6 @@ export function ab2hex(buffer) {
   return hexArr.join(':');
 }
 
-export function stringToHex(str) {
-  let hex = '';
-  for (let i = 0; i < str.length; i++) {
-    let code = str.charCodeAt(i);
-    let hexCode = code.toString(16);
-    // 如果是单字符的16进制，前面补0
-    hex += hexCode.length === 1 ? '0' + hexCode : hexCode;
-  }
-  return hex;
-}
-
 /**
  * 判断传值是否为空、[]、{}
  * @param {*} param 
@@ -502,3 +492,53 @@ export const isEmpty = (param) => {
   return false;
 }
 
+
+
+  
+export const stringToHex = (str) => {
+  var result = '';
+  for (var i = 0; i < str.length; i++) {
+    result += ('00' + str.charCodeAt(i).toString(16)).slice(-2);
+  }
+  return result;
+}
+
+export const hexStringToBytes = (hexString) => {
+  if (!/^[0-9a-fA-F]+$/.test(hexString)) {
+    throw 'Invalid hexadecimal string';
+  }
+  // 确保字符串长度为偶数，如果不是，则在前面补0
+  if (hexString.length % 2 !== 0) {
+    hexString = '0' + hexString;
+  }
+  // 将每两个字符视为一个字节，并转换为对应的字节值
+  let byteArray = new Uint8Array(hexString.length / 2);
+  for (let i = 0; i < byteArray.length; i++) {
+    byteArray[i] = parseInt(hexString.substr(i * 2, 2), 16);
+  }
+  // 返回ArrayBuffer
+  return byteArray.buffer;
+}
+
+export const arrayBufferToHex = (arrayBuffer) => {
+  let byteArray = new Uint8Array(arrayBuffer);
+  let hexString = '';
+  for (let i = 0; i < byteArray.byteLength; i++) {
+    hexString += ('0' + byteArray[i].toString(16)).slice(-2);
+  }
+  console.log('hexString', hexString)
+  return hexString;
+}
+
+export const hexToString =(hex) => {
+  let arr = hex.match(/[\dA-F]{2}/gi); // 分割每两个字符一组
+  let bytes = arr.map(function(h) {
+      return parseInt(h, 16);
+  });
+  return new TextDecoder("utf-8").decode(new Uint8Array(bytes));
+}
+
+export const arrayBufferToUtf8String = (arrayBuffer) => {
+  const decoder = new TextDecoder('utf-8'); // 创建TextDecoder实例，指定编码为UTF-8
+  return decoder.decode(arrayBuffer); // 解码ArrayBuffer为字符串
+}
