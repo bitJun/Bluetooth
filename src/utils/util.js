@@ -463,18 +463,6 @@ export function string2buffer(str) {
   })).buffer
 }
 
-/**
- * 将ArrayBuffer转换成字符串
- */
-export function ab2hex(buffer) {
-  var hexArr = Array.prototype.map.call(
-    new Uint8Array(buffer),
-    function (bit) {
-      return ('00' + bit.toString(16)).slice(-2)
-    }
-  )
-  return hexArr.join(':');
-}
 
 /**
  * 判断传值是否为空、[]、{}
@@ -491,8 +479,6 @@ export const isEmpty = (param) => {
   }
   return false;
 }
-
-
 
   
 export const stringToHex = (str) => {
@@ -541,4 +527,43 @@ export const hexToString =(hex) => {
 export const arrayBufferToUtf8String = (arrayBuffer) => {
   const decoder = new TextDecoder('utf-8'); // 创建TextDecoder实例，指定编码为UTF-8
   return decoder.decode(arrayBuffer); // 解码ArrayBuffer为字符串
+}
+
+export const stringToBuffer = (hex) => {
+  let typedArray = new Uint8Array(hex.match(/[\da-f]{2}/gi).map(function (h) {
+    return parseInt(h, 16);
+  }));
+  return typedArray.buffer;
+}
+
+// ArrayBuffer转16进度字符串示例
+export function ab2hex(buffer) {
+  let hexArr = Array.prototype.map.call(
+    new Uint8Array(buffer),
+    function(bit) {
+      return ('00' + bit.toString(16)).slice(-2)
+    }
+  )
+  return hexArr.join('');
+}
+
+// 将16进制的内容转成我们看得懂的字符串内容
+export function hexCharCodeToStr(hexCharCodeStr) {
+    var trimedStr = hexCharCodeStr.trim();
+    var rawStr = trimedStr.substr(0, 2).toLowerCase() === "0x" ? trimedStr.substr(2) : trimedStr;
+    var len = rawStr.length;
+    if (len % 2 !== 0) {
+      Taro.showToast({
+        title: '存在非法字符',
+        icon: 'none'
+      })
+      return "";
+    }
+    var curCharCode;
+    var resultStr = [];
+    for (var i = 0; i < len; i = i + 2) {
+      curCharCode = parseInt(rawStr.substr(i, 2), 16);
+      resultStr.push(String.fromCharCode(curCharCode));
+    }
+    return resultStr.join("");
 }

@@ -6,11 +6,8 @@ import clearIcon from '@images/clearIcon.png';
 import { set as setGlobalData, get as getGlobalData } from '@config/global';
 import {
   ab2hex,
-  stringToHex,
-  string2buffer,
-  arrayBufferToHex,
-  hexToString,
-  arrayBufferToUtf8String
+  stringToBuffer,
+  hexCharCodeToStr
 } from '@utils/util';
 import "./index.scss";
 
@@ -83,9 +80,9 @@ const Detail = () => {
       success: function(res) {
         Taro.getBLEDeviceServices({
           deviceId: device.deviceId,
-          success: function(res) {
-            setServices(res.services)
-            res.services.forEach(item => {
+          success: function(json) {
+            setServices(json.services)
+            json.services.forEach(item => {
               onLoadDeviceCharacteristics(item.uuid)
             })
           }
@@ -97,7 +94,7 @@ const Detail = () => {
   const onLoadDeviceCharacteristics = (servicesId) => {
     let device = getGlobalData('deviceInfo');
     // 获取特征值
-    wx.getBLEDeviceCharacteristics({
+    Taro.getBLEDeviceCharacteristics({
       deviceId: device.deviceId,
       serviceId: servicesId,
       success: function(res) {
@@ -116,8 +113,9 @@ const Detail = () => {
               serviceId: servicesId,
               characteristicId: item.uuid,
               state: true,
-              success(res) {
-                console.log('notifyBLECharacteristicValueChange success', res , res.errMsg)
+              success(json) {
+                onMonitor();
+                // console.log('notifyBLECharacteristicValueChange success', res , res.errMsg)
               },
               fail: function(err) {
                 // console.log('readBLECharacteristicValueError:', err);
@@ -126,50 +124,27 @@ const Detail = () => {
           }
         })
       }
+    });
+  }
+
+  const onMonitor = () => {
+    Taro.onBLECharacteristicValueChange((res)=>{
+      console.log('onMonitor', res);
+      console.log('value', ab2hex(res.value))
     })
-    wx.onBLECharacteristicValueChange((res) => {
-      console.log('res', res)
-      console.log('success', arrayBufferToUtf8String(res.value))
-    })
   }
-  const ab2hex = (buffer) => {
-    var hexArr = Array.prototype.map.call(
-      new Uint8Array(buffer),
-      function (bit) {
-        return ('00' + bit.toString(16)).slice(-2)
-      }
-    )
-    return hexArr.join('');
-  }
-
-  const arrayBufferToString = (buffer) => {
-    console.log('buffer', typeof(array));
-    let array = new Uint8Array(buffer);
-    console.log('arr', typeof(array));
-    let str = '';
-    for (let i = 0; i < array.byteLength; i++) {
-      str += String.fromCharCode(array[i]);
-    }
-    console.log('str', str);
-    return str;
-  }
-
-  const stringToCmdBuffer = (inputstr) => {
-    return new Uint8Array(inputstr.match(/[\da-f]{2}/gi).map(function (h) {
-      return parseInt(h, 16);
-    })).buffer;
-  };
-
+  
   const onWriteBLECharacteristicValue = () => {
     let device = getGlobalData('deviceInfo');
-    var str = 'AA-02-13-02-0F-00-0D';
+    let str = 'AA-02-13-02-28-00-0D';
     Taro.writeBLECharacteristicValue({
       deviceId: device.deviceId,
       serviceId: writeId,
       characteristicId: characteristicsId,
-      value: stringToCmdBuffer(str),
+      value: stringToBuffer(str),
+      // value: buffer,
       complete: function(json) {
-        console.log('json', json)
+        // console.log('json', json)
       }
     })
   }
@@ -198,14 +173,6 @@ const Detail = () => {
     data[type] = '';
     setCompanyInfo(data);
   }
-
-  const onBlur = (key) => {
-    let data = { ...focusInfo };
-    data[key] = false;
-    setFocusInfo(data);
-    let value = companyInfo[key];
-    onWriteBLECharacteristicValue(value)
-  };
 
   const onSubmit = () => {
     onWriteBLECharacteristicValue();
