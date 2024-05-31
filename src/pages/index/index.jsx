@@ -73,16 +73,16 @@ const Bluetooth = () => {
       icon: 'loading'
     });
     let state = await enableBlueTooth();
-    if(!state) {
-      Taro.showModal({
-        title: '系统提示',
-        content: '抱歉手机蓝牙未开启，请开启蓝牙后进行搜索！',
-        showCancel: false,
-        success (res) {
-          Taro.hideLoading({});
-        }
-      });
-    } else {
+    // if(!state) {
+    //   Taro.showModal({
+    //     title: '系统提示',
+    //     content: '抱歉手机蓝牙未开启，请开启蓝牙后进行搜索！',
+    //     showCancel: false,
+    //     success (res) {
+    //       Taro.hideLoading({});
+    //     }
+    //   });
+    // } else {
       //#region 
       // 监听扫描到新设备事件
       Taro.onBluetoothDeviceFound((res) => {
@@ -137,7 +137,7 @@ const Bluetooth = () => {
           }
         });
       }, 2000);
-    }
+    // }
   }
 
   const onChooseDevice = (obj) => {
@@ -156,7 +156,7 @@ const Bluetooth = () => {
     // dispatch(updateDeviceInfo(deviceInfo));
     setGlobalData('deviceInfo', deviceInfo);
     Taro.navigateTo({
-      url: '/pages/detail/index'
+      url: `/pages/detail/index?deviceId=${deviceInfo.deviceId}`
     });
   }
 

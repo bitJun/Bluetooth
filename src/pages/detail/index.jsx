@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Image, Input } from "@tarojs/components";
-import Taro, { useDidHide } from "@tarojs/taro";
+import Taro, { useDidHide, useRouter } from "@tarojs/taro";
 import clearIcon from '@images/clearIcon.png';
-// import { useSelector } from 'react-redux';
-import { set as setGlobalData, get as getGlobalData } from '@config/global';
 import {
   ab2hex,
   stringToBuffer,
@@ -12,7 +10,9 @@ import {
 import "./index.scss";
 
 const Detail = () => {
+  const router = useRouter();
   // const device = useSelector((state) => state.device);
+  const [deviceId, setDeviceId] = useState(null);
   const [focusInfo, setFocusInfo] = useState({
     '1B': false,
     '10': false,
@@ -54,13 +54,21 @@ const Detail = () => {
   const [characteristics, setCharacteristics] = useState([]);
 
   useEffect(() => {
-    onConnectDevice();
+    let params = router.params;
+    if (params.deviceId) {
+      setDeviceId(params.deviceId)
+    }
   }, []);
 
+  useEffect(()=>{
+    if (deviceId) {
+      onConnectDevice();
+    }
+  }, [deviceId]);
+
   useDidHide(()=>{
-    let device = getGlobalData('deviceInfo');
     Taro.closeBLEConnection({
-      deviceId: device.deviceId,
+      deviceId: deviceId,
     })
   })
 
@@ -74,12 +82,11 @@ const Detail = () => {
   }
 
   const onConnectDevice = () => {
-    let device = getGlobalData('deviceInfo');
     Taro.createBLEConnection({
-      deviceId: device.deviceId,
+      deviceId: deviceId,
       success: function(res) {
         Taro.getBLEDeviceServices({
-          deviceId: device.deviceId,
+          deviceId: deviceId,
           success: function(json) {
             setServices(json.services)
             json.services.forEach(item => {
@@ -92,10 +99,9 @@ const Detail = () => {
   }
 
   const onLoadDeviceCharacteristics = (servicesId) => {
-    let device = getGlobalData('deviceInfo');
     // 获取特征值
     Taro.getBLEDeviceCharacteristics({
-      deviceId: device.deviceId,
+      deviceId: deviceId,
       serviceId: servicesId,
       success: function(res) {
         setCharacteristicsId(res.characteristics[0].uuid);
@@ -109,7 +115,7 @@ const Detail = () => {
           }
           if (item.properties.notify || item.properties.indicate) {
             Taro.notifyBLECharacteristicValueChange({
-              deviceId: device.deviceId,
+              deviceId: deviceId,
               serviceId: servicesId,
               characteristicId: item.uuid,
               state: true,
@@ -127,6 +133,9 @@ const Detail = () => {
     });
   }
 
+  /**
+   * 监听低功耗蓝牙设备的特征值变化
+   */
   const onMonitor = () => {
     Taro.onBLECharacteristicValueChange((res)=>{
       console.log('onMonitor', res);
@@ -134,25 +143,25 @@ const Detail = () => {
     })
   }
   
+  /**
+   * BLE写入数据
+   */
   const onWriteBLECharacteristicValue = () => {
-    let device = getGlobalData('deviceInfo');
     let str = 'AA-02-13-02-28-00-0D';
     Taro.writeBLECharacteristicValue({
-      deviceId: device.deviceId,
+      deviceId: deviceId,
       serviceId: writeId,
       characteristicId: characteristicsId,
       value: stringToBuffer(str),
-      // value: buffer,
       complete: function(json) {
-        // console.log('json', json)
+        console.log('writeSuccess', ab2hex(stringToBuffer(str)))
       }
     })
   }
 
   const onReadBLECharacteristicValue = (servicesId, characteristicId) => {
-    let device = getGlobalData('deviceInfo');
     Taro.readBLECharacteristicValue({
-      deviceId: device.deviceId,
+      deviceId: deviceId,
       serviceId: servicesId,
       characteristicId: characteristicId,
       success: function(res) {
