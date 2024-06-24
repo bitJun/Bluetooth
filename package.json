@@ -9,7 +9,10 @@
     "css": "sass"
   },
   "scripts": {
-    "build:weapp": "taro build --type weapp",
+    "build:weapp:dev": "taro build --type weapp --mode development",
+    "build:weapp:prod": "taro build --type weapp --mode prod",
+    "build:weapp:pre": "taro build --type weapp --mode pre",
+    "build:weapp:test": "taro build --type weapp --mode test",
     "build:swan": "taro build --type swan",
     "build:alipay": "taro build --type alipay",
     "build:tt": "taro build --type tt",
@@ -18,7 +21,10 @@
     "build:qq": "taro build --type qq",
     "build:jd": "taro build --type jd",
     "build:quickapp": "taro build --type quickapp",
-    "dev:weapp": "npm run build:weapp -- --watch",
+    "dev:weapp:dev": "npm run build:weapp:dev -- --watch",
+    "dev:weapp:prod": "npm run build:weapp:prod -- --watch",
+    "dev:weapp:pre": "npm run build:weapp:pre -- --watch",
+    "dev:weapp:test": "npm run build:weapp:test -- --watch",
     "dev:swan": "npm run build:swan -- --watch",
     "dev:alipay": "npm run build:alipay -- --watch",
     "dev:tt": "npm run build:tt -- --watch",

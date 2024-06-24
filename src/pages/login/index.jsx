@@ -6,6 +6,9 @@ import Logo from '@images/logo.png';
 import clearIcon from '@images/clearIcon.png';
 import hideIcon from '@images/hide.png';
 import showIcon from '@images/show.png';
+import {
+  postMiniLogin
+} from '@api';
 import "./index.scss";
 
 const Login = () => {

@@ -35,7 +35,7 @@ export function baseRequest(options) {
   const getEnv = Taro.getEnv();
   return new Promise((resolve, reject) => {
     Taro.request({
-      url: `${requestInfo.BaseUrl}${url}`,
+      url: `${process.env.TARO_APP_API}${url}`,
       method,
       data: data,
       header,
@@ -129,7 +129,7 @@ export function operateRequest(options) {
   const getEnv = Taro.getEnv();
   return new Promise((resolve, reject) => {
     Taro.request({
-      url: `${requestInfo.BaseUrl}${url}`,
+      url: `${process.env.TARO_APP_API}${url}`,
       method,
       data: data,
       header,
