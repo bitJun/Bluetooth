@@ -1,7 +1,5 @@
 import Taro from "@tarojs/taro";
 import { Toast } from "@nutui/nutui-react-taro";
-import { requestInfo } from "@config";
-import { queryRefreshToken } from "@api/user";
 import { setStorageSync, getStorageSync, clearStroageSync } from "@utils/util";
 const CODE_SUCCESS = "00000";
 const CODE_AUTH_EXPIRED = ["A0325"]; //登录失效
@@ -25,7 +23,7 @@ export function baseRequest(options) {
     contentType,
   } = options;
   const token = getStorageSync("accessToken");
-  const header = token ? { Authorization: `Bearer ${token}` } : {};
+  const header = { 'X-Access-Token': `${token}` }
   if (["POST", "PUT", "DELETE"].indexOf(method) != -1 && contentType) {
     header["content-type"] = contentType;
   } else {
@@ -41,13 +39,14 @@ export function baseRequest(options) {
       header,
     })
       .then((res) => {
-        if (res.data.code == CODE_SUCCESS) {
-          resolve(res.data.data);
+        console.log('all', res);
+        if (res.data.code == 200) {
+          resolve(res.data.result);
         } else {
           if (res.data.code == "00000") {
             reject(res.data);
           } else {
-            if (res.data.code == "A0325") {
+            if (res.data.code == "401") {
               clearStroageSync();
               Taro.showToast({
                 title: "登录失效,请重新登录",
@@ -56,35 +55,9 @@ export function baseRequest(options) {
               });
               setTimeout(() => {
                 Taro.redirectTo({
-                  url: "/pages/subpages/login/index",
+                  url: "/pages/login/index",
                 });
               }, 1000);
-            }
-            if (res.data.code == "A0304") {
-              setTimeout(() => {
-                clearStroageSync();
-                Taro.redirectTo({
-                  url: "/pages/subpages/login/index",
-                });
-              }, 2000);
-            }
-            if (res.data.code == "A0402") {
-              setTimeout(() => {
-                clearStroageSync();
-                Taro.redirectTo({
-                  url: "/pages/subpages/register/index",
-                });
-              }, 2000);
-            } else {
-              if (res.data.code != "A0100") {
-                console.log(3123123);
-                Taro.showToast({
-                  title: res.data.message,
-                  icon: "none",
-                  duration: 2000,
-                });
-                reject(res.data);
-              }
             }
           }
         }

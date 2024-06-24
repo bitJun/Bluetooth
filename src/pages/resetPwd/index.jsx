@@ -8,26 +8,36 @@ import hideIcon from '@images/hide.png';
 import showIcon from '@images/show.png';
 import { setStorageSync } from "@utils/util";
 import {
-  postMiniLogin
+  postMiniLogin,
+  postUpdatePassword
 } from '@api';
 import "./index.scss";
 
-const Login = () => {
+const ResetPwd = () => {
   let [systemInfo, setSystemInfo] = useState({});
   let [rate, setRate] = useState("");
   const [canSubmit, setCanSubmit] = useState(false);
   const [accountParams, setAccountParams] = useState({
     username: '',
-    password: ''
+    password: '',
+    oldpassword: '',
+    confirmpassword: ''
   });
   const [focusInfo, setFocusInfo] = useState({
     username: false,
     password: false,
+    oldpassword: false,
+    confirmpassword: false
   });
-  const [showPassword, setShowPassword] = useState(true);
+  const [showPassword, setShowPassword] = useState({
+    username: true,
+    password: true,
+    oldpassword: true,
+    confirmpassword: true
+  });
 
   useEffect(() => {
-    if (accountParams.username && accountParams.password) {
+    if (accountParams.username && accountParams.password && accountParams.oldpassword && accountParams.confirmpassword) {
       setCanSubmit(true);
     } else {
       setCanSubmit(false);
@@ -68,20 +78,41 @@ const Login = () => {
       });
       return;
     }
+    if (!accountParams.oldpassword) {
+      Taro.showToast({
+        title: '请输入j旧密码',
+        icon: 'none'
+      });
+      return;
+    }
     if (!accountParams.password) {
       Taro.showToast({
-        title: '请输入密码',
+        title: '请输入新密码',
+        icon: 'none'
+      });
+      return;
+    }
+    if (!accountParams.confirmpassword) {
+      Taro.showToast({
+        title: '请输入新密码',
+        icon: 'none'
+      });
+      return;
+    }
+    if (accountParams.confirmpassword != accountParams.password) {
+      Taro.showToast({
+        title: '两次密码输入不一致',
         icon: 'none'
       });
       return;
     }
     else {
-      postMiniLogin(accountParams)
+      postUpdatePassword(accountParams)
         .then(res=>{
           console.log('res', res);
           setStorageSync('accessToken', res.token);
           setStorageSync('userInfo', res.userInfo);
-          Taro.redirectTo({
+          Taro.navigateTo({
             url: '/pages/index/index'
           })
         })
@@ -91,13 +122,15 @@ const Login = () => {
     }
   };
 
-  const onShowPwd = (event) => {
+  const onShowPwd = (key,event) => {
     event.stopPropagation();
-    if (showPassword) {
-      setShowPassword(false);
+    let data = { ...showPassword };
+    if (data[key]) {
+      data[key] = false;
     } else {
-      setShowPassword(true);
+      data[key] = true;
     }
+    setShowPassword(data);
   };
 
   const onFocus = (key) => {
@@ -113,9 +146,9 @@ const Login = () => {
   };
 
   const forgetPwd = () => {
-    Taro.navigateTo({
-      url: '/pages/resetPwd/index'
-    });
+    // Taro.navigateTo({
+    //   url: ''
+    // })
   }
 
   return (
@@ -182,10 +215,58 @@ const Login = () => {
               <View className="loginViewFormControl loginViewFormControlPass">
                 <Input
                   className="loginViewFormControlValue"
-                  value={accountParams.password}
-                  placeholder="请输入密码"
+                  value={accountParams.oldpassword}
+                  placeholder="请输入旧密码"
                   placeholderClass="placeholder"
-                  password={showPassword}
+                  password={showPassword.oldpassword}
+                  onInput={(e) => {
+                    onChange("oldpassword", e);
+                  }}
+                  cursor={accountParams.oldpassword.toString().length}
+                  controlled={true}
+                  maxlength={50}
+                  onFocus={() => {
+                    onFocus("oldpassword");
+                  }}
+                  onBlur={() => {
+                    onBlur("oldpassword");
+                  }}
+                />
+                {accountParams.oldpassword && focusInfo.oldpassword ? (
+                  <View
+                    className="loginViewFormControlClear"
+                    onClick={(e) => {
+                      onClear("oldpassword", e);
+                    }}
+                  >
+                    <Image
+                      src={clearIcon}
+                      className="loginViewFormControlClearIcon"
+                      mode="widthFix"
+                    />
+                  </View>
+                ) : null}
+                <View
+                  className="loginViewFormControlAction"
+                  onClick={(e) => {
+                    onShowPwd('oldpassword', e);
+                  }}
+                >
+                  <Image
+                    src={showPassword.oldpassword ? hideIcon : showIcon}
+                    className="loginViewFormControlActionImg w48"
+                    mode="widthFix"
+                    lazyLoad={true}
+                  />
+                </View>
+              </View>
+              <View className="loginViewFormControl loginViewFormControlPass">
+                <Input
+                  className="loginViewFormControlValue"
+                  value={accountParams.password}
+                  placeholder="请输入新密码"
+                  placeholderClass="placeholder"
+                  password={showPassword.password}
                   onInput={(e) => {
                     onChange("password", e);
                   }}
@@ -216,11 +297,59 @@ const Login = () => {
                 <View
                   className="loginViewFormControlAction"
                   onClick={(e) => {
-                    onShowPwd(e);
+                    onShowPwd('password', e);
                   }}
                 >
                   <Image
-                    src={showPassword ? hideIcon : showIcon}
+                    src={showPassword.password ? hideIcon : showIcon}
+                    className="loginViewFormControlActionImg w48"
+                    mode="widthFix"
+                    lazyLoad={true}
+                  />
+                </View>
+              </View>
+              <View className="loginViewFormControl loginViewFormControlPass">
+                <Input
+                  className="loginViewFormControlValue"
+                  value={accountParams.confirmpassword}
+                  placeholder="请输入新密码"
+                  placeholderClass="placeholder"
+                  password={showPassword.confirmpassword}
+                  onInput={(e) => {
+                    onChange("confirmpassword", e);
+                  }}
+                  cursor={accountParams.confirmpassword.toString().length}
+                  controlled={true}
+                  maxlength={50}
+                  onFocus={() => {
+                    onFocus("confirmpassword");
+                  }}
+                  onBlur={() => {
+                    onBlur("confirmpassword");
+                  }}
+                />
+                {accountParams.confirmpassword && focusInfo.confirmpassword ? (
+                  <View
+                    className="loginViewFormControlClear"
+                    onClick={(e) => {
+                      onClear("confirmpassword", e);
+                    }}
+                  >
+                    <Image
+                      src={clearIcon}
+                      className="loginViewFormControlClearIcon"
+                      mode="widthFix"
+                    />
+                  </View>
+                ) : null}
+                <View
+                  className="loginViewFormControlAction"
+                  onClick={(e) => {
+                    onShowPwd('confirmpassword', e);
+                  }}
+                >
+                  <Image
+                    src={showPassword.confirmpassword ? hideIcon : showIcon}
                     className="loginViewFormControlActionImg w48"
                     mode="widthFix"
                     lazyLoad={true}
@@ -228,16 +357,6 @@ const Login = () => {
                 </View>
               </View>
             </View>
-          </View>
-          <View className="loginViewFormTip">
-            <Text
-              className="loginViewFormTipAction"
-              onClick={() => {
-                forgetPwd();
-              }}
-            >
-              忘记密码
-            </Text>
           </View>
           <View
             className={`loginViewFormAction ${
@@ -255,4 +374,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ResetPwd;

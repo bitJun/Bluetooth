@@ -3,7 +3,8 @@ export default defineAppConfig({
     'pages/index/index',
     'pages/login/index',
     'pages/detail/index',
-    'pages/list/index'
+    'pages/list/index',
+    'pages/resetPwd/index'
   ],
   permission: {
     "scope.userLocation": {

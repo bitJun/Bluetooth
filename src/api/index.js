@@ -7,8 +7,8 @@ import { baseRequest, operateRequest } from "@utils/request";
  */
 const postMiniLogin = (data) => {
   return baseRequest({
-    url: `/sys/doremo/miniLogin`,
-    method: "PUT",
+    url: `/miniLogin`,
+    method: "POST",
     contentType: 'application/json',
     data,
   });
@@ -21,8 +21,8 @@ const postMiniLogin = (data) => {
  */
 const postUpdatePassword = (data) => {
   return baseRequest({
-    url: `/sys/doremo/updatePassword`,
-    method: "POST",
+    url: `/updatePassword`,
+    method: "PUT",
     contentType: 'application/json',
     data,
   });
@@ -35,7 +35,7 @@ const postUpdatePassword = (data) => {
  */
 const queryVerifyToken = (data) => {
   return baseRequest({
-    url: `/sys/doremo/verifyToken`,
+    url: `/verifyToken`,
     method: "GET",
     data,
   });
@@ -48,7 +48,7 @@ const queryVerifyToken = (data) => {
  */
 const postLog = (data) => {
   return baseRequest({
-    url: `/sys/doremo/verifyToken`,
+    url: `/verifyToken`,
     method: "POST",
     contentType: 'application/json',
     data,
