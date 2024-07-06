@@ -638,5 +638,5 @@ export default {
   maskPhoneNumber,
   maskBankNumber,
   maskIdCard,
-  useKeyboardHeight
+  useKeyboardHeight,
 }

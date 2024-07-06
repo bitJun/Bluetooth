@@ -567,3 +567,8 @@ export function hexCharCodeToStr(hexCharCodeStr) {
     }
     return resultStr.join("");
 }
+
+export function splitStringByTwoStrict(str) {  
+  // 使用正则表达式严格匹配两个字符  
+  return str.match(/.{2}/g) || [];  
+}

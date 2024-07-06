@@ -1,7 +1,7 @@
 import path from 'node:path'
 const config = {
-  projectName: 'Bluetooth',
-  date: '2024-4-26',
+  projectName: 'min',
+  date: '2024-3-18',
   designWidth: 750,
   deviceRatio: {
     640: 2.34 / 2,
@@ -10,7 +10,7 @@ const config = {
     375: 2 / 1
   },
   sourceRoot: 'src',
-  outputRoot: 'dist',
+  outputRoot: `dist/${process.env.TARO_ENV}`,
   plugins: ['@tarojs/plugin-html'],
   defineConstants: {
   },
@@ -35,6 +35,9 @@ const config = {
     type: 'webpack5',
     prebundle: { enable: false }
   },
+  sass:{
+    data: `@import "@nutui/nutui-react-taro/dist/styles/variables.scss";`
+  },
   mini: {
     postcss: {
       pxtransform: {
@@ -50,7 +53,7 @@ const config = {
         }
       },
       cssModules: {
-        enable: false, // 默认为 false，如需使用 css modules 功能，则设为 true
+        enable: true, // 默认为 false，如需使用 css modules 功能，则设为 true
         config: {
           namingPattern: 'module', // 转换模式，取值为 global/module
           generateScopedName: '[name]__[local]___[hash:base64:5]'
