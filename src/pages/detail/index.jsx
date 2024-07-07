@@ -3,6 +3,7 @@ import { View, Image, Input } from "@tarojs/components";
 import Taro, { useDidHide, useRouter } from "@tarojs/taro";
 import clearIcon from '@images/clearIcon.png';
 import editIcon from '@images/edit.png';
+import useSyncState from '@utils/hooks';
 import {
   ab2hex,
   stringToBuffer,
@@ -17,23 +18,7 @@ const Detail = () => {
   const router = useRouter();
   const [deviceId, setDeviceId] = useState(null);
   const [id, setId] = useState('TTE0101DT2405000001');
-  const [focusInfo, setFocusInfo] = useState({
-    '1B': false,
-    '10': false,
-    '11': false,
-    '12': false,
-    '13': false,
-    '23': false,
-    '14': false,
-    '25': false,
-    '24': false,
-    '1A': false,
-    '17': false,
-    '19': false,
-    '15': false,
-    '1C': false,
-    '22': false
-  });
+  const [focused, setFocused] = useState(false);
   const [companyInfo, setCompanyInfo] = useState({
     '1B': '',
     '10': '',
@@ -135,6 +120,9 @@ const Detail = () => {
       let key = arr[1];
       let value = parseInt(arr[3], 16);
       let data = {...companyInfo};
+      console.log('companyInfo', companyInfo);
+      console.log('value', value);
+      console.log('key', key);
       data[key] = value;
       setCompanyInfo(data);
     })
@@ -159,18 +147,42 @@ const Detail = () => {
 
   const onReadBLECharacteristicValue = () => {
     let keys = Object.keys(companyInfo);
-    keys.forEach(item=>{
-      let str = `AA-01-${item}-0D`;
-      Taro.writeBLECharacteristicValue({
-        deviceId: deviceId,
-        serviceId: read.current,
-        characteristicId: characteristic.current,
-        value: stringToBuffer(str),
-        complete: function(json) {
-          // console.log('read', json)
-        }
-      })
-    })
+    for(var i = 0; i < keys.length; i++) {
+      (function(n){  //利用闭包
+        setTimeout(function(){
+          let str = `AA-01-${keys[n]}-0D`;
+          Taro.writeBLECharacteristicValue({
+            deviceId: deviceId,
+            serviceId: read.current,
+            characteristicId: characteristic.current,
+            value: stringToBuffer(str),
+            complete: function(json) {
+              // console.log('read', json)
+            }
+          })
+        }, 1000*n)
+      })(i)
+    }
+  }
+
+  const onRead = (val) => {
+    let keys = Object.keys(companyInfo);
+    for(var i = val;i < keys.length; i++) {
+      (function(n){  //利用闭包
+        setTimeout(function(){
+          let str = `AA-01-${keys[n]}-0D`;
+          Taro.writeBLECharacteristicValue({
+            deviceId: deviceId,
+            serviceId: read.current,
+            characteristicId: characteristic.current,
+            value: stringToBuffer(str),
+            complete: function(json) {
+              // console.log('read', json)
+            }
+          })
+        }, 1000*n)
+      })(i)
+    }
   }
 
   const onChange = (event) => {
@@ -225,8 +237,10 @@ const Detail = () => {
               placeholder="请设置设备Id"
               placeholderClass='placeholder'
               maxlength={50}
+              onFocus={()=>{setFocused(true)}}
+              onBlur={()=>{setFocused(false)}}
             />
-            {id && focusInfo['id'] ? (
+            {id && focused ? (
               <View className='formViewControlInfoAction'>
                 <Image
                   src={clearIcon}
