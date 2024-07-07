@@ -152,6 +152,8 @@ const Detail = () => {
       (function(n){  //利用闭包
         setTimeout(function(){
           let str = `AA-01-${keys[n]}-0D`;
+          console.log('str', str);
+          console.log('keys', keys[n]);
           Taro.writeBLECharacteristicValue({
             deviceId: deviceId,
             serviceId: read.current,
