@@ -35,7 +35,7 @@ const Bluetooth = () => {
   useEffect(()=>{
     if (!isDiscovery) {
 
-    console.log('list.current', list.current)
+      console.log('list.current', list.current)
       setDevices(list.current);
     }
   }, [list.current, isDiscovery]);

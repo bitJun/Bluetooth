@@ -19,7 +19,8 @@ const Detail = () => {
   const [deviceId, setDeviceId] = useState(null);
   const [id, setId] = useState('TTE0101DT2405000001');
   const [focused, setFocused] = useState(false);
-  const [companyInfo, setCompanyInfo] = useState({
+  const [bluetoothInfo, setBluetoothInfo] = useSyncState({});
+  const info = useRef({
     '1B': '',
     '10': '',
     '11': '',
@@ -35,7 +36,7 @@ const Detail = () => {
     '15': '',
     '1C': '',
     '22': ''
-  });
+  })
   const [writeId, setWriteId] = useState(null);
   const [characteristicsId, setCharacteristicsId] = useState(null);
   const read = useRef(null);
@@ -119,12 +120,12 @@ const Detail = () => {
       let arr = splitStringByTwoStrict(ab2hex(res.value).toLocaleUpperCase());
       let key = arr[1];
       let value = parseInt(arr[3], 16);
-      let data = {...companyInfo};
-      console.log('companyInfo', companyInfo);
-      console.log('value', value);
-      console.log('key', key);
-      data[key] = value;
-      setCompanyInfo(data);
+      let val = {...info.current};
+      val[key] = value;
+      info.current = val;
+      // console.log('info.current', info.current)
+      setBluetoothInfo(val)
+      console.log('bluetoothInfo', bluetoothInfo)
     })
   }
   
@@ -146,28 +147,8 @@ const Detail = () => {
   }
 
   const onReadBLECharacteristicValue = () => {
-    let keys = Object.keys(companyInfo);
+    let keys = Object.keys(info.current);
     for(var i = 0; i < keys.length; i++) {
-      (function(n){  //利用闭包
-        setTimeout(function(){
-          let str = `AA-01-${keys[n]}-0D`;
-          Taro.writeBLECharacteristicValue({
-            deviceId: deviceId,
-            serviceId: read.current,
-            characteristicId: characteristic.current,
-            value: stringToBuffer(str),
-            complete: function(json) {
-              // console.log('read', json)
-            }
-          })
-        }, 1000*n)
-      })(i)
-    }
-  }
-
-  const onRead = (val) => {
-    let keys = Object.keys(companyInfo);
-    for(var i = val;i < keys.length; i++) {
       (function(n){  //利用闭包
         setTimeout(function(){
           let str = `AA-01-${keys[n]}-0D`;
@@ -195,9 +176,9 @@ const Detail = () => {
   }
 
   const onEdit = (key, val) => {
-    let info = companyInfo[key];
+    let data = info.current[key];
     setCharacterId(key);
-    setValue(info);
+    setValue(data);
     setTitle(val);
     setVisible1(true);
   }
@@ -264,7 +245,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['1B'] ? companyInfo['1B'] : '请设置输入欠压限制'}
+                    {bluetoothInfo['1B'] ? bluetoothInfo['1B'] : '请设置输入欠压限制'}
                   </View>
                   <Image
                     src={editIcon}
@@ -280,7 +261,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['10'] ? companyInfo['10'] : '请设置输入过流限制'}
+                    {bluetoothInfo['10'] != '' ? bluetoothInfo['10'] : '请设置输入过流限制'}
                   </View>
                   <Image
                     src={editIcon}
@@ -296,7 +277,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['11'] ? companyInfo['11'] : '请设置输入过压限制'}
+                    {bluetoothInfo['11'] ? bluetoothInfo['11'] : '请设置输入过压限制'}
                   </View>
                   <Image
                     src={editIcon}
@@ -312,7 +293,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['12'] ? companyInfo['12'] : '请设置输出过流限制'}
+                    {bluetoothInfo['12'] ? bluetoothInfo['12'] : '请设置输出过流限制'}
                   </View>
                   <Image
                     src={editIcon}
@@ -328,7 +309,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['13'] ? companyInfo['13'] : '请设置输出过压限制'}
+                    {bluetoothInfo['13'] ? bluetoothInfo['13'] : '请设置输出过压限制'}
                   </View>
                   <Image
                     src={editIcon}
@@ -344,12 +325,12 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['24'] ? companyInfo['24'] : '请设置输出过流保护'}
+                    {bluetoothInfo['23'] ? bluetoothInfo['23'] : '请设置输出过流保护'}
                   </View>
                   <Image
                     src={editIcon}
                     className='edit'
-                    onClick={()=>{onEdit('24', '输出过流保护')}}
+                    onClick={()=>{onEdit('23', '输出过流保护')}}
                   />
                 </View>
               </View>
@@ -360,7 +341,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['14'] ? companyInfo['14'] : '请设置输出功率最大值'}
+                    {bluetoothInfo['14'] ? bluetoothInfo['14'] : '请设置输出功率最大值'}
                   </View>
                   <Image
                     src={editIcon}
@@ -376,12 +357,12 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['25'] ? companyInfo['25'] : '请设置输出过压恢复'}
+                    {bluetoothInfo['25'] ? bluetoothInfo['25'] : '请设置输出过压恢复'}
                   </View>
                   <Image
                     src={editIcon}
                     className='edit'
-                    onClick={()=>{onEdit('25', 输出过压恢复)}}
+                    onClick={()=>{onEdit('25', '输出过压恢复')}}
                   />
                 </View>
               </View>
@@ -392,12 +373,12 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['24'] ? companyInfo['24'] : '请设置输出欠压恢复'}
+                    {bluetoothInfo['24'] ? bluetoothInfo['24'] : '请设置输出欠压恢复'}
                   </View>
                   <Image
                     src={editIcon}
                     className='edit'
-                    onClick={()=>{onEdit('24', 输出欠压恢复)}}
+                    onClick={()=>{onEdit('24', '输出欠压恢复')}}
                   />
                 </View>
               </View>
@@ -408,7 +389,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['1A'] ? companyInfo['1A'] : '请设置高温报警限制'}
+                    {bluetoothInfo['1A'] ? bluetoothInfo['1A'] : '请设置高温报警限制'}
                   </View>
                   <Image
                     src={editIcon}
@@ -424,7 +405,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['17'] ? companyInfo['17'] : '请设置周期上报间隔'}
+                    {bluetoothInfo['17'] ? bluetoothInfo['17'] : '请设置周期上报间隔'}
                   </View>
                   <Image
                     src={editIcon}
@@ -440,7 +421,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['19'] ? companyInfo['19'] : '请设置开启时间段'}
+                    {bluetoothInfo['19'] ? bluetoothInfo['19'] : '请设置开启时间段'}
                   </View>
                   <Image
                     src={editIcon}
@@ -456,7 +437,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['15'] ? companyInfo['15'] : '远程开关'}
+                    {bluetoothInfo['15'] ? bluetoothInfo['15'] : '远程开关'}
                   </View>
                   <Image
                     src={editIcon}
@@ -472,7 +453,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['1C'] ? companyInfo['1C'] : '请设置输出电压'}
+                    {bluetoothInfo['1C'] ? bluetoothInfo['1C'] : '请设置输出电压'}
                   </View>
                   <Image
                     src={editIcon}
@@ -488,7 +469,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {companyInfo['22'] ? companyInfo['22'] : '请设置输出功率'}
+                    {bluetoothInfo['22'] ? bluetoothInfo['22'] : '请设置输出功率'}
                   </View>
                   <Image
                     src={editIcon}
@@ -519,6 +500,7 @@ const Detail = () => {
               value={value}
               onChange={(e)=>{onChangeInfo(e)}}
               className="modal-Value"
+              cursor={value.toString().length}
             />
             {
               value &&
