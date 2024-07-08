@@ -163,7 +163,7 @@ const Detail = () => {
               // console.log('read', json)
             }
           })
-        }, 1000*n)
+        }, 300*n)
       })(i)
     }
   }
