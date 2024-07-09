@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, Image, Input } from "@tarojs/components";
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import { View, Image, Input, Picker } from "@tarojs/components";
 import Taro, { useDidHide, useRouter } from "@tarojs/taro";
 import clearIcon from '@images/clearIcon.png';
 import editIcon from '@images/edit.png';
@@ -7,10 +7,14 @@ import useSyncState from '@utils/hooks';
 import {
   ab2hex,
   stringToBuffer,
-  splitStringByTwoStrict
+  splitStringByTwoStrict,
+  hours,
+  minuite,
+  second
 } from '@utils/util';
 import {
-  Overlay
+  Overlay,
+  Switch
 } from '@nutui/nutui-react-taro';
 import "./index.scss";
 
@@ -43,8 +47,28 @@ const Detail = () => {
   const characteristic = useRef(null);
   const [visible1, setVisible1] = useState(false);
   const [title, setTitle] = useState('');
-  const [value, setValue] = useState('');
-  const [characterId, setCharacterId] = useState(null);
+  const [value, setValue] = useState(null);
+  const [characterId, setCharacterId] = useState(19);
+
+  const options = useMemo(() => {
+    if (characterId == 19) {
+      return [
+        hours,
+        minuite
+      ]
+    }
+    if (characterId == 14) {
+      return [
+        hours,
+        minuite,
+        second
+      ]
+    }
+  }, [characterId]);
+
+  useEffect(()=>{
+    console.log('options', options)
+  }, [options])
 
   useEffect(() => {
     let params = router.params;
@@ -134,7 +158,49 @@ const Detail = () => {
    */
   const onWriteBLECharacteristicValue = () => {
     // let str = 'AA-02-13-02-28-00-0D';
-    let str = `AA-02-${characterId}-02-${value}-00-0D`;
+    let char = '';
+    let val = value;
+    //两位
+    if (['1B', '10', '11', '12', '13', '17', '1A', '1C', '22', '23', '24', '25'].indexOf(characterId) != -1) {
+      val = Number(val).toFixed(2);
+      let arr = val.split('.');
+      let json = arr.map(item=>{
+        item = Number(item).toString(16);
+        if (item.length < 2) {
+          item = `0${item}`;
+        }
+        return item;
+      });
+      char = json.join('-');
+    }
+    //三位
+    if (characterId == 14) {
+      json = value.map(item=>{
+        item = Number(item).toString(16);
+        if (item.length < 2) {
+          item = `0${item}`;
+        }
+        return item;
+      });
+      char = json.join('-');
+    }
+    //四位
+    if (characterId == 19) {
+      let json = [value[0], '00', value[1], '00'];
+      json = json.map(item=>{
+        item = Number(item).toString(16);
+        if (item.length < 2) {
+          item = `0${item}`;
+        }
+        return item;
+      });
+      char = json.join('-');
+    }
+    //一位
+    if (characterId == 15) {
+      char = Number(val).toString(16);
+    }
+    let str = `AA-02-${characterId}-02-${char}-0D`;
     Taro.writeBLECharacteristicValue({
       deviceId: deviceId,
       serviceId: writeId,
@@ -152,8 +218,6 @@ const Detail = () => {
       (function(n){  //利用闭包
         setTimeout(function(){
           let str = `AA-01-${keys[n]}-0D`;
-          console.log('str', str);
-          console.log('keys', keys[n]);
           Taro.writeBLECharacteristicValue({
             deviceId: deviceId,
             serviceId: read.current,
@@ -190,10 +254,6 @@ const Detail = () => {
   }
 
   const onHandleSubmit = () => {
-    Taro.showToast({
-      title: `characterId:${characterId};;value:${value}`,
-      icon: 'none'
-    });
     onWriteBLECharacteristicValue();
   }
 
@@ -201,6 +261,10 @@ const Detail = () => {
     setTitle('');
     setValue('');
     setVisible1(false);
+  }
+
+  const handleColumnChange = (e) => {
+    console.log('e', e)
   }
 
   return (
@@ -439,7 +503,7 @@ const Detail = () => {
                 </View>
                 <View className='formViewControlInfo'>
                   <View className="formViewControlInfoValue">
-                    {bluetoothInfo['15'] ? bluetoothInfo['15'] : '远程开关'}
+                    {bluetoothInfo['15'] ? bluetoothInfo['15'] == 1 ? '开' : '关' : '远程开关'}
                   </View>
                   <Image
                     src={editIcon}
@@ -497,23 +561,70 @@ const Detail = () => {
       >
         <View className='modal'>
           <View className="modal-title">{title}</View>
-          <View className="modal-Info">
-            <Input
-              value={value}
-              onChange={(e)=>{onChangeInfo(e)}}
-              className="modal-Value"
-              cursor={value.toString().length}
-            />
-            {
-              value &&
-              <View className="clearAction" onClick={()=>{setValue('')}}>
-                <Image
-                  src={clearIcon}
-                  className="clearActionIcon"
+          {
+            ['1B', '10', '11', '12', '13', '17', '1A', '1C', '22', '23', '24', '25'].indexOf(characterId) != -1 ? (
+              <View className="modal-Info">
+                <Input
+                  type="digit"
+                  value={value}
+                  onChange={(e)=>{onChangeInfo(e)}}
+                  className="modal-Value"
+                  cursor={value.toString().length}
                 />
+                {
+                  value &&
+                  <View className="clearAction" onClick={()=>{setValue('')}}>
+                    <Image
+                      src={clearIcon}
+                      className="clearActionIcon"
+                    />
+                  </View>
+                }
               </View>
-            }
-          </View>
+            ) : null
+          }
+          {
+            characterId == 14 ? (
+              <Picker
+                mode='multiSelector'
+                onChange={(e)=>{handleColumnChange(e)}}
+                range={options}
+                value={[0,0,0]}
+              >
+                <View class='picker'>
+                  {value ? `${value[0]}时${value[1]}分${value[0]}秒` : '请选择'}
+                </View>
+              </Picker>
+            ) : null
+          }
+          {
+            characterId == 19 ? (
+              <Picker
+                mode='multiSelector'
+                onChange={(e)=>{handleColumnChange(e)}}
+                range={options}
+                value={[0,0,0]}
+              >
+                <View class='picker'>
+                {value ? `${value[0]}时${value[1]}分` : '请选择'}
+                </View>
+              </Picker>
+            ) : null
+          }
+          {
+            characterId == 15 ? (
+              <Switch
+                checked={value == 1 ? true : false}
+                onChange={(e)=>{
+                  if (e) {
+                    setValue(1)
+                  } else {
+                    setValue(0)
+                  }
+                }}
+              />
+            ) : null
+          }
           <View className="modal-footer">
             <View className="cancel" onClick={()=>{onCancel()}}>取消</View>
             <View className="sure" onClick={()=>{onHandleSubmit()}}>确认</View>
