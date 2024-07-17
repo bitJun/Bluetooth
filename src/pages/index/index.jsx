@@ -34,7 +34,6 @@ const Bluetooth = () => {
 
   useEffect(()=>{
     if (!isDiscovery) {
-
       console.log('list.current', list.current)
       setDevices(list.current);
     }
@@ -158,6 +157,9 @@ const Bluetooth = () => {
     Taro.navigateTo({
       url: `/pages/detail/index?deviceId=${deviceInfo.deviceId}`
     });
+    // Taro.navigateTo({
+    //   url: `/pages/list/index?deviceId=${deviceInfo.deviceId}`
+    // });
   }
 
   return (

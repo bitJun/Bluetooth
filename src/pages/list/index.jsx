@@ -1,130 +1,212 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View } from '@tarojs/components';
-import Taro, {
-  useDidShow
-} from '@tarojs/taro'
-import { Button } from "@nutui/nutui-react-taro";
-import './index.scss'
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import { View, Image, ScrollView } from "@tarojs/components";
+import Taro, { useDidHide, useRouter } from "@tarojs/taro";
+import useSyncState from '@utils/hooks';
+import {
+  ab2hex,
+  stringToBuffer,
+  splitStringByTwoStrict,
+  hours,
+  minuite,
+  second
+} from '@utils/util';
+import {
+  Overlay,
+  Switch
+} from '@nutui/nutui-react-taro';
+import "./index.scss";
 
-function Index() {
-  const [devicesList, setDevicesList] = useState([]);
-  const [chs, setChs] = useState([]);
-  const [connected, setConnected] = useState(false);
-  const [discoveryStarted, setDiscoveryStarted] = useState(false);
+const List = () => {
+  const router = useRouter();
+  const [deviceId, setDeviceId] = useState(null);
+  const [id, setId] = useState('TTE0101DT2405000001');
+  const [focused, setFocused] = useState(false);
+  const [bluetoothInfo, setBluetoothInfo] = useSyncState({});
+  const [safeHeight, setSafeHeight] = useState(0);
+  const [safeArea, setSafeArea] = useState(0);
   const list = useRef([]);
-  
-  useDidShow(()=>{
-    onInitBluetooth();
+  const info = useRef({
+    '1B': '',
+    '10': '',
+    '11': '',
+    '12': '',
+    '13': '',
+    '23': '',
+    '14': '',
+    '25': '',
+    '24': '',
+    '1A': '',
+    '17': '',
+    '19': '',
+    '15': '',
+    '1C': '',
+    '22': ''
+  })
+  const [writeId, setWriteId] = useState(null);
+  const [characteristicsId, setCharacteristicsId] = useState(null);
+  const read = useRef(null);
+  const characteristic = useRef(null);
+
+  const getSystemInfo = () => {
+    Taro.getSystemInfoAsync({
+      success(res) {
+        let rate = res.safeArea.width / 750;
+        let safeArea = res.safeArea.bottom - res.safeArea.height;
+        let height = res.screenHeight - res.screenTop - safeArea - 120 * rate;
+        setSafeHeight(height);
+        setSafeArea(safeArea);
+      },
+    });
+  };
+
+  useEffect(() => {
+    getSystemInfo();
+    let params = router.params;
+    console.log('params', params)
+    if (params.deviceId) {
+      setDeviceId(params.deviceId)
+    }
   }, []);
 
-  const onInitBluetooth = () => {
-    Taro.openBluetoothAdapter({
-      success: function () {
-        console.log('蓝牙模块初始化成功');
-        // 开始搜索蓝牙设备
-        onSearchDevices();
-      },
-      fail: function (err) {
-        console.error('蓝牙模块初始化失败', err);
-      }
-    });
-  }
+  useEffect(()=>{
+    if (deviceId) {
+      onConnectDevice();
+    }
+  }, [deviceId]);
 
-  const onSearchDevices = () => {
-    Taro.startBluetoothDevicesDiscovery({
-      success: function () {
-        console.log('开始搜索蓝牙设备');
-        // 假设搜索时间为 5 秒
-        setTimeout(function () {
-          // 获取搜索到的蓝牙设备列表
-          onLoadDevices();
-        }, 4000);
-      },
-      fail: function (err) {
-        console.error('开始搜索蓝牙设备失败', err);
-      }
-    });
-  }
+  useDidHide(()=>{
+    Taro.closeBLEConnection({
+      deviceId: deviceId,
+    })
+  })
 
-  const onLoadDevices = () => {
-    Taro.getBluetoothDevices({
-      success: function (res) {
-        console.log('搜索到的蓝牙设备列表：', res);
-        // 停止搜索蓝牙设备
-        Taro.stopBluetoothDevicesDiscovery({
-          success: function () {
-            console.log('停止搜索蓝牙设备');
-            // 连接蓝牙设备
-            var deviceId = res.devices[0].deviceId; // 假设连接第一个搜索到的设备
-            Taro.createBLEConnection({
-              deviceId: deviceId,
-              success: function (res) {
-                console.log('连接蓝牙设备成功：', res);
-                // 断开蓝牙连接
-                Taro.closeBLEConnection({
-                  deviceId: deviceId,
-                  success: function () {
-                    console.log('断开蓝牙连接成功');
-                    // 关闭蓝牙模块
-                    Taro.closeBluetoothAdapter({
-                      success: function () {
-                        console.log('蓝牙模块关闭成功');
-                      }
-                    });
-                  }
-                });
-              },
-              fail: function (err) {
-                console.error('连接蓝牙设备失败', err);
-              }
-            });
-          },
-          fail: function (err) {
-            console.error('停止搜索蓝牙设备失败', err);
-          }
-        });
-      },
-      fail: function (err) {
-        console.error('获取搜索到的蓝牙设备列表失败', err);
-      }
-    });
-  }
-
-  const onConnect = (deviceId) => {
+  const onConnectDevice = () => {
     Taro.createBLEConnection({
-      deviceId,
+      deviceId: deviceId,
       success: function(res) {
-        setConnected(true);
-        console.log(res)
+        Taro.getBLEDeviceServices({
+          deviceId: deviceId,
+          success: function(json) {
+            onLoadDeviceCharacteristics(json.services[0].uuid)
+          }
+        })
+      }
+    })
+  }
+
+  const onLoadDeviceCharacteristics = (servicesId) => {
+    console.log('servicesId', servicesId)
+    setWriteId(servicesId);
+    read.current = servicesId;
+    // 获取特征值
+    Taro.getBLEDeviceCharacteristics({
+      deviceId: deviceId,
+      serviceId: servicesId,
+      success: function(res) {
+        setCharacteristicsId(res.characteristics[0].uuid);
+        characteristic.current = res.characteristics[0].uuid
+        res.characteristics.forEach(item=>{
+          if (item.properties.write) {
+            setWriteId(servicesId);
+          }
+          if (item.properties.notify) {
+            onReadBLECharacteristicValue();
+            Taro.notifyBLECharacteristicValueChange({
+              deviceId: deviceId,
+              serviceId: servicesId,
+              characteristicId: item.uuid,
+              state: true,
+              success(json) {
+                onMonitor();
+              },
+              fail: function(err) {
+              }
+            })
+          }
+        })
+      }
+    });
+  }
+
+  /**
+   * 监听低功耗蓝牙设备的特征值变化
+   */
+  const onMonitor = () => {
+    Taro.onBLECharacteristicValueChange((res)=>{
+      let arr = splitStringByTwoStrict(ab2hex(res.value).toLocaleUpperCase());
+      console.log('arr', arr)
+      let key = arr[1];
+      let value = parseInt(arr[3], 16);
+      let val = {...info.current};
+      val[key] = value;
+      info.current = val;
+      // console.log('info.current', info.current)
+      setBluetoothInfo(val)
+    })
+  }
+
+  const onReadBLECharacteristicValue = () => {
+    let str = `AA-46464646464646464646464646464646-01-02-0D`;
+    console.log('str', str)
+    Taro.writeBLECharacteristicValue({
+      deviceId: deviceId,
+      serviceId: read.current,
+      characteristicId: characteristic.current,
+      value: stringToBuffer(str),
+      complete: function(json) {
+        console.log('read', json)
       }
     })
   }
 
   return (
     <View>
-      <View className="index">
-        欢迎使用 NutUI React 开发 Taro 多端项目。
-      </View>
-      <View className="index">
-        <Button type="primary" className="btn">
-          搜索蓝牙设备
-        </Button>
-      </View>
-      <View className='list'>
-        {
-          devicesList.map(item=>
+      <ScrollView
+        className='bluetooth'
+        style={{
+          height: `${safeHeight}px`
+        }}
+        scrollY={true}
+      >
+        {/* {
+          devices.map(item=>
             <View
-              className='item'
-              key={item.deviceId}
-              onClick={()=>{createBLEConnection(item)}}
+              className='bluetoothBox'
+              onClick={()=>{onChooseDevice(item)}}
             >
-              {item.name}
+              <Image
+                src={bluetoothIcon}
+                className='bluetoothBoxIcon'
+                mode='widthFix'
+              />
+              <View className='bluetoothBoxMain'>
+                <View className='bluetoothBoxMainName'>{item.localName}</View>
+                <View className='bluetoothBoxMainId'>
+                  设备ID: <Text className='bluetoothBoxMainDesc'>{item.deviceId}</Text>
+                </View>
+                <View className='bluetoothBoxMainRSSI'>
+                  RSSI: <Text className='bluetoothBoxMainDesc'>{item.RSSI}</Text>
+                </View>
+              </View>
+              <Image
+                src={item.deviceId == devicesId ? checkIcon : uncheckIcon}
+                className='bluetoothBoxChecked'
+              />
             </View>
           )
-        }
+        } */}
+      </ScrollView>
+      <View
+        className='connect'
+        onClick={()=>{onConnectDevice()}}
+        style={{
+          bottom: `${safeArea}px`
+        }}
+      >
+        确认连接
       </View>
     </View>
-  )
-}
+  );
+};
 
-export default Index
+export default List;

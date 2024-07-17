@@ -66,10 +66,6 @@ const Detail = () => {
     }
   }, [characterId]);
 
-  useEffect(()=>{
-    console.log('options', options)
-  }, [options])
-
   useEffect(() => {
     let params = router.params;
     if (params.deviceId) {
@@ -90,6 +86,7 @@ const Detail = () => {
   })
 
   const onConnectDevice = () => {
+    console.log('123', 123)
     Taro.createBLEConnection({
       deviceId: deviceId,
       success: function(res) {
@@ -227,7 +224,7 @@ const Detail = () => {
               // console.log('read', json)
             }
           })
-        }, 300*n)
+        }, 200*n)
       })(i)
     }
   }
