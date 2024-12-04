@@ -5,7 +5,7 @@ import {
   Text,
   ScrollView
 } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow, useDidHide } from '@tarojs/taro'
 import bluetoothIcon from '@images/bluetooth.png';
 import checkIcon from '@images/check.png';
 import uncheckIcon from '@images/uncheck.png';
@@ -14,6 +14,9 @@ import uncheckIcon from '@images/uncheck.png';
 // } from '@stores/actions/device'
 // import { useDispatch } from 'react-redux';
 import { set as setGlobalData, get as getGlobalData } from '@config/global';
+import {
+  queryVerifyToken
+} from '@api';
 import './index.scss';
 
 const Bluetooth = () => {
@@ -27,6 +30,17 @@ const Bluetooth = () => {
   const [safeArea, setSafeArea] = useState(0);
   const list = useRef([]);
 
+  useDidShow(() => {
+    onVerifyToken();
+  })
+
+  const onVerifyToken = () => {
+    queryVerifyToken({})
+      .then(res=>{
+        console.log('res', res);
+      })
+  }
+  
   useEffect(()=>{
     getSystemInfo();
     discoveryBlueToothDevices();

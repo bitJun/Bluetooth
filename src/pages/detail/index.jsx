@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { View, Image, Input, Picker } from "@tarojs/components";
-import Taro, { useDidHide, useRouter } from "@tarojs/taro";
+import Taro, { useDidShow, useDidHide, useRouter } from "@tarojs/taro";
 import clearIcon from '@images/clearIcon.png';
 import editIcon from '@images/edit.png';
 import useSyncState from '@utils/hooks';
@@ -16,6 +16,9 @@ import {
   Overlay,
   Switch
 } from '@nutui/nutui-react-taro';
+import {
+  queryVerifyToken
+} from '@api';
 import "./index.scss";
 
 const Detail = () => {
@@ -65,6 +68,17 @@ const Detail = () => {
       ]
     }
   }, [characterId]);
+
+  useDidShow(() => {
+    onVerifyToken();
+  })
+
+  const onVerifyToken = () => {
+    queryVerifyToken({})
+      .then(res=>{
+        console.log('res', res);
+      })
+  }
 
   useEffect(() => {
     let params = router.params;

@@ -14,7 +14,7 @@ function App(props) {
 
   // 对应 onShow
   useDidShow(() => {
-    onVerifyToken();
+    // onVerifyToken();
   })
 
   // 对应 onHide

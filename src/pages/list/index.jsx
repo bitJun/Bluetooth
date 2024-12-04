@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { View, Image, ScrollView } from "@tarojs/components";
-import Taro, { useDidHide, useRouter } from "@tarojs/taro";
+import Taro, { useDidShow, useDidHide, useRouter } from "@tarojs/taro";
 import useSyncState from '@utils/hooks';
 import {
   ab2hex,
@@ -10,6 +10,9 @@ import {
   minuite,
   second
 } from '@utils/util';
+import {
+  queryVerifyToken
+} from '@api';
 import {
   Overlay,
   Switch
@@ -46,6 +49,17 @@ const List = () => {
   const [characteristicsId, setCharacteristicsId] = useState(null);
   const read = useRef(null);
   const characteristic = useRef(null);
+
+  useDidShow(() => {
+    onVerifyToken();
+  })
+
+  const onVerifyToken = () => {
+    queryVerifyToken({})
+      .then(res=>{
+        console.log('res', res);
+      })
+  }
 
   const getSystemInfo = () => {
     Taro.getSystemInfoAsync({
